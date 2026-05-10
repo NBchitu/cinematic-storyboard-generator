@@ -1,0 +1,6 @@
+interface:
+  display_name: "Cinematic Storyboard Generator"
+  short_description: "Storyboards, video prompts, frame cuts"
+  default_prompt: "Use $cinematic-storyboard-generator to turn my story into cinematic 3x3 storyboard sheets with consistent professional video-generation prompts, then split sheets into ordered frame assets when needed."
+policy:
+  allow_implicit_invocation: true

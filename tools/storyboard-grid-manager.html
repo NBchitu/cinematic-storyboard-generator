@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Storyboard Grid Manager</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #11110f;
+      --panel: #1b1a17;
+      --panel-2: #24221e;
+      --ink: #f4efe5;
+      --muted: #aca394;
+      --line: #3b352c;
+      --accent: #f2b35e;
+      --accent-2: #78c6a3;
+      --danger: #e5746c;
+      --shadow: 0 22px 70px rgba(0, 0, 0, .42);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 22% 10%, rgba(242, 179, 94, .14), transparent 32rem),
+        linear-gradient(145deg, #0e0e0c 0%, #191714 48%, #0d0d0c 100%);
+      color: var(--ink);
+      font-family: ui-serif, "Songti SC", "Noto Serif CJK SC", Georgia, serif;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1560px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 26px 0 32px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 58px);
+      letter-spacing: 0;
+      line-height: .95;
+      max-width: 780px;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.55;
+      font-size: 15px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--ink);
+      background: #211f1b;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      border-color: #65553d;
+      background: #2b2720;
+    }
+
+    .button.primary {
+      color: #18130c;
+      border-color: transparent;
+      background: var(--accent);
+      font-weight: 700;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(560px, 1fr) 440px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stage,
+    .side {
+      border: 1px solid var(--line);
+      background: rgba(27, 26, 23, .94);
+      box-shadow: var(--shadow);
+    }
+
+    .stage {
+      padding: 14px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .input-line {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 10px;
+      align-items: center;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      background: #141310;
+      padding: 8px 10px;
+    }
+
+    .input-line span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      color: var(--ink);
+      background: transparent;
+      border: 0;
+      outline: 0;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      color: var(--muted);
+    }
+
+    .board-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #090908;
+      overflow: hidden;
+      border: 1px solid #070706;
+    }
+
+    .board-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: .98;
+    }
+
+    .empty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+      line-height: 1.6;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size: 33.333% 33.333%;
+    }
+
+    .grid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+    }
+
+    .cell {
+      position: relative;
+      border: 1.5px solid rgba(255, 255, 255, .82);
+      cursor: pointer;
+      background: rgba(0, 0, 0, .12);
+      transition: background .14s ease, box-shadow .14s ease;
+    }
+
+    .cell:hover,
+    .cell.active {
+      background: rgba(242, 179, 94, .14);
+      box-shadow: inset 0 0 0 3px rgba(242, 179, 94, .92);
+    }
+
+    .badge {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #150f08;
+      background: var(--accent);
+      font: 800 17px/1 ui-sans-serif, system-ui, sans-serif;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, .34);
+    }
+
+    .cell input {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      width: 22px;
+      height: 22px;
+      accent-color: var(--accent-2);
+      cursor: pointer;
+    }
+
+    .edit-icon {
+      position: absolute;
+      right: 42px;
+      top: 8px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .28);
+      border-radius: 50%;
+      color: #150f08;
+      background: rgba(242, 179, 94, .94);
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity .14s ease, transform .14s ease;
+      z-index: 4;
+      font: 800 16px/1 ui-sans-serif, system-ui, sans-serif;
+      cursor: pointer;
+    }
+
+    .cell:hover .edit-icon,
+    .cell.active .edit-icon,
+    .cell.has-edit .edit-icon {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .prompt-chip {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 7px;
+      min-height: 22px;
+      max-height: 48px;
+      overflow: hidden;
+      border: 1px solid rgba(242, 179, 94, .36);
+      border-radius: 5px;
+      color: #f6ead7;
+      background: rgba(15, 12, 8, .78);
+      padding: 4px 7px;
+      font: 500 10px/1.35 ui-sans-serif, system-ui, sans-serif;
+      text-align: left;
+      z-index: 3;
+      cursor: pointer;
+    }
+
+    .cell.out {
+      background: rgba(0, 0, 0, .5);
+    }
+
+    .cell.out::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(30deg, transparent 48.8%, rgba(231, 116, 108, .92) 49.5%, rgba(231, 116, 108, .92) 50.5%, transparent 51.2%),
+        linear-gradient(-30deg, transparent 48.8%, rgba(231, 116, 108, .72) 49.5%, rgba(231, 116, 108, .72) 50.5%, transparent 51.2%);
+      pointer-events: none;
+    }
+
+    .side {
+      padding: 14px;
+      position: sticky;
+      top: 14px;
+    }
+
+    .side h2 {
+      margin: 0 0 10px;
+      font-size: 21px;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      padding: 10px;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 22px;
+      color: var(--accent);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    label.field {
+      display: block;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    textarea {
+      display: block;
+      min-height: 98px;
+      margin-top: 7px;
+      padding: 10px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      background: #141310;
+      line-height: 1.5;
+    }
+
+    .prompt {
+      min-height: 330px;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #e9dfce;
+    }
+
+    .muted-note {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .included-list {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      color: #15100a;
+      background: var(--accent);
+      padding: 10px 12px;
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events: none;
+      font-weight: 700;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(0, 0, 0, .62);
+      z-index: 20;
+    }
+
+    .modal-backdrop.open {
+      display: grid;
+    }
+
+    .modal {
+      width: min(520px, calc(100vw - 36px));
+      border: 1px solid #5b4a33;
+      background: #181612;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .modal h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .modal textarea {
+      min-height: 150px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        width: min(100vw - 22px, 1560px);
+        padding-top: 16px;
+      }
+
+      header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .input-line {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        left: 6px;
+        top: 6px;
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
+      }
+
+      .cell input {
+        right: 6px;
+        top: 6px;
+      }
+
+      .edit-icon {
+        right: 36px;
+        top: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Storyboard Grid Manager</h1>
+        <p class="subtitle">预览 3x3 分镜图，标记 1-9 号镜头，勾选后直接切割为独立分镜图，并为多个分镜分别编写局部编辑提示词。</p>
+      </div>
+      <div class="top-actions">
+        <button class="button" id="selectAll" type="button">全选</button>
+        <button class="button" id="selectNone" type="button">全不选</button>
+          <button class="button primary" id="splitImages" type="button">切割图片</button>
+          <button class="button" id="exportJson" type="button">导出清单</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <div class="controls">
+          <label class="input-line">
+            <span>图片文件</span>
+            <input id="fileInput" type="file" accept="image/*">
+          </label>
+          <label class="input-line">
+            <span>图片 URL</span>
+            <input id="urlInput" type="text" placeholder="粘贴九宫格分镜图 URL 或本地绝对路径">
+          </label>
+        </div>
+
+        <div class="board-wrap" id="board">
+          <img class="board-img" id="boardImg" alt="storyboard preview">
+          <div class="empty" id="emptyState">上传或粘贴一张 3x3 分镜图。<br>遮罩会按固定九宫格覆盖到图片上。</div>
+          <div class="grid" id="grid" aria-label="storyboard grid"></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <h2 id="panelTitle">多分镜编辑</h2>
+        <div class="meta">
+          <div class="stat"><b id="includedCount">9</b><span>纳入最终分镜</span></div>
+          <div class="stat"><b id="editCount">0</b><span>待修改分镜</span></div>
+        </div>
+
+        <label class="field">
+          多分镜 AI 图片编辑 Prompt
+          <textarea class="prompt" id="combinedPrompt" readonly></textarea>
+        </label>
+        <p class="muted-note">点击每个格子右上角的小编辑图标，填写该格的局部修改要求。右侧会自动把多个分镜的 prompt 拼成一次完整编辑请求。</p>
+
+        <div class="meta">
+          <label class="input-line">
+            <span>文件前缀</span>
+            <input id="filePrefix" type="text" value="shot">
+          </label>
+          <label class="input-line">
+            <span>起始编号</span>
+            <input id="startIndex" type="text" value="1">
+          </label>
+          <label class="input-line">
+            <span>Sheet 编号</span>
+            <input id="sheetIndex" type="text" value="1">
+          </label>
+          <label class="input-line">
+            <span>输出格式</span>
+            <input id="outputFormat" type="text" value="png" placeholder="png">
+          </label>
+        </div>
+        <p class="muted-note">切割按原图像素等分 3x3，输出比例与九宫格单格一致。16:9 分镜图会导出 16:9 独立分镜。</p>
+
+        <div class="row">
+          <button class="button primary" id="editImage" type="button">修改图片</button>
+          <button class="button" id="copyPrompt" type="button">复制完整 Prompt</button>
+          <button class="button" id="splitImagesSide" type="button">切割选中分镜</button>
+        </div>
+
+        <p class="included-list" id="includedList"></p>
+      </aside>
+    </section>
+  </main>
+  <div class="modal-backdrop" id="promptModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <h3 id="modalTitle">编辑第 1 格 Prompt</h3>
+      <label class="field">
+        局部修改要求
+        <textarea id="modalInstruction" placeholder="例如：把小北的表情改得更害怕，保持阿木、面包架和光线不变。"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button class="button" id="cancelPrompt" type="button">取消</button>
+        <button class="button primary" id="savePrompt" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast">已复制</div>
+
+  <script>
+    const state = {
+      active: 1,
+      editing: null,
+      included: Array.from({ length: 9 }, () => true),
+      instructions: Array.from({ length: 9 }, () => ""),
+      imageName: "",
+      imageSrc: ""
+    };
+
+    const grid = document.getElementById("grid");
+    const boardImg = document.getElementById("boardImg");
+    const emptyState = document.getElementById("emptyState");
+    const fileInput = document.getElementById("fileInput");
+    const urlInput = document.getElementById("urlInput");
+    const panelTitle = document.getElementById("panelTitle");
+    const includedCount = document.getElementById("includedCount");
+    const editCount = document.getElementById("editCount");
+    const combinedPrompt = document.getElementById("combinedPrompt");
+    const includedList = document.getElementById("includedList");
+    const promptModal = document.getElementById("promptModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalInstruction = document.getElementById("modalInstruction");
+    const toast = document.getElementById("toast");
+    const filePrefix = document.getElementById("filePrefix");
+    const startIndex = document.getElementById("startIndex");
+    const sheetIndex = document.getElementById("sheetIndex");
+    const outputFormat = document.getElementById("outputFormat");
+
+    function cellCrop(index) {
+      const zero = index - 1;
+      const col = zero % 3;
+      const row = Math.floor(zero / 3);
+      return {
+        panel: index,
+        xPercent: +(col * 33.333333).toFixed(6),
+        yPercent: +(row * 33.333333).toFixed(6),
+        widthPercent: 33.333333,
+        heightPercent: 33.333333,
+        row: row + 1,
+        col: col + 1
+      };
+    }
+
+    function buildEditPrompt(index) {
+      const instruction = state.instructions[index - 1].trim() || "按用户的新要求优化这个分镜的画面表现。";
+      const crop = cellCrop(index);
+      return [
+        "Edit the provided full 3x3 storyboard sheet image.",
+        `Only modify panel ${index}, located at row ${crop.row}, column ${crop.col}.`,
+        `Panel ${index} crop region in the full image: x=${crop.xPercent}%, y=${crop.yPercent}%, width=${crop.widthPercent}%, height=${crop.heightPercent}%.`,
+        "Keep panels 1-9 unchanged except for the specified target panel.",
+        "Preserve the 3x3 grid layout, gutters, numbering/markers, overall aspect ratio, character continuity, lighting continuity, and storyboard order.",
+        "Do not add captions, speech bubbles, logos, watermarks, or readable text.",
+        `Requested change for panel ${index}: ${instruction}`
+      ].join("\n");
+    }
+
+    function editedPanelIndexes() {
+      return state.instructions
+        .map((instruction, i) => instruction.trim() ? i + 1 : null)
+        .filter(Boolean);
+    }
+
+    function buildCombinedPrompt() {
+      const panels = editedPanelIndexes();
+      if (!panels.length) {
+        return "请先点击分镜遮罩右上角的编辑图标，为需要修改的分镜填写 prompt。";
+      }
+
+      const requests = panels.map((index) => {
+        const crop = cellCrop(index);
+        return [
+          `Panel ${index} (row ${crop.row}, column ${crop.col})`,
+          `Crop region: x=${crop.xPercent}%, y=${crop.yPercent}%, width=${crop.widthPercent}%, height=${crop.heightPercent}%.`,
+          `Requested change: ${state.instructions[index - 1].trim()}`
+        ].join("\n");
+      });
+
+      return [
+        "Edit the provided full 3x3 storyboard sheet image.",
+        `Apply the following ${panels.length} panel edits in one image-edit operation.`,
+        `Only modify panels ${panels.join(", ")}. Preserve every other panel exactly as-is.`,
+        "Preserve the 3x3 grid layout, gutters, numbering/markers, overall aspect ratio, character continuity, lighting continuity, and storyboard order.",
+        "Do not add captions, speech bubbles, logos, watermarks, or readable text.",
+        "",
+        requests.join("\n\n")
+      ].join("\n");
+    }
+
+    function buildPayload() {
+      return {
+        imageName: state.imageName,
+        imageSrc: state.imageSrc,
+        grid: "3x3",
+        readingOrder: "left-to-right, top-to-bottom",
+        editedPanels: editedPanelIndexes(),
+        combinedPrompt: buildCombinedPrompt(),
+        panels: Array.from({ length: 9 }, (_, i) => ({
+          panel: i + 1,
+          included: state.included[i],
+          crop: cellCrop(i + 1),
+          editInstruction: state.instructions[i],
+          editPrompt: buildEditPrompt(i + 1)
+        }))
+      };
+    }
+
+    function selectedPanelIndexes() {
+      return state.included
+        .map((included, i) => included ? i + 1 : null)
+        .filter(Boolean);
+    }
+
+    function sanitizeStem(value, fallback) {
+      const clean = String(value || "")
+        .trim()
+        .replace(/\.[a-z0-9]+$/i, "")
+        .replace(/[^a-zA-Z0-9_-]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      return clean || fallback;
+    }
+
+    function parsePositiveInteger(value, fallback) {
+      const parsed = Number.parseInt(String(value).trim(), 10);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+    }
+
+    function pad(value, size) {
+      return String(value).padStart(size, "0");
+    }
+
+    function outputExtension() {
+      const format = String(outputFormat.value || "png").trim().toLowerCase();
+      return ["png", "jpg", "jpeg", "webp"].includes(format) ? format : "png";
+    }
+
+    function mimeTypeFor(extension) {
+      if (extension === "jpg" || extension === "jpeg") return "image/jpeg";
+      if (extension === "webp") return "image/webp";
+      return "image/png";
+    }
+
+    function sourceStem() {
+      return sanitizeStem(state.imageName || "storyboard_sheet", "storyboard_sheet");
+    }
+
+    function buildFrameBasename(panelIndex, sequenceIndex) {
+      const prefix = sanitizeStem(filePrefix.value, "shot");
+      const sheet = parsePositiveInteger(sheetIndex.value, 1);
+      const extension = outputExtension();
+      return `${prefix}_${pad(sequenceIndex, 3)}_s${pad(sheet, 2)}_p${pad(panelIndex, 2)}.${extension}`;
+    }
+
+    function buildFrameFilename(panelIndex, sequenceIndex) {
+      return `${sourceStem()}_shots/${buildFrameBasename(panelIndex, sequenceIndex)}`;
+    }
+
+    function panelCropPixels(index) {
+      const zero = index - 1;
+      const col = zero % 3;
+      const row = Math.floor(zero / 3);
+      const width = boardImg.naturalWidth;
+      const height = boardImg.naturalHeight;
+      return {
+        x: Math.round(col * width / 3),
+        y: Math.round(row * height / 3),
+        width: Math.round((col + 1) * width / 3) - Math.round(col * width / 3),
+        height: Math.round((row + 1) * height / 3) - Math.round(row * height / 3),
+        row: row + 1,
+        col: col + 1
+      };
+    }
+
+    function canvasToBlob(canvas, type) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+            return;
+          }
+          reject(new Error("无法生成图片文件"));
+        }, type, 0.95);
+      });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function writeBlobToDirectory(directoryHandle, filename, blob) {
+      const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    }
+
+    async function cutPanelToBlob(index) {
+      const crop = panelCropPixels(index);
+      const canvas = document.createElement("canvas");
+      canvas.width = crop.width;
+      canvas.height = crop.height;
+      const context = canvas.getContext("2d");
+      context.drawImage(
+        boardImg,
+        crop.x,
+        crop.y,
+        crop.width,
+        crop.height,
+        0,
+        0,
+        crop.width,
+        crop.height
+      );
+      return {
+        blob: await canvasToBlob(canvas, mimeTypeFor(outputExtension())),
+        crop,
+        size: [crop.width, crop.height]
+      };
+    }
+
+    function buildCutManifest(entries) {
+      return {
+        imageName: state.imageName,
+        sourceSize: [boardImg.naturalWidth, boardImg.naturalHeight],
+        grid: "3x3",
+        readingOrder: "left-to-right, top-to-bottom",
+        outputFolder: `${sourceStem()}_shots`,
+        panels: entries
+      };
+    }
+
+    async function splitStoryboardImages() {
+      if (!state.imageSrc || !boardImg.complete || !boardImg.naturalWidth) {
+        showToast("请先上传九宫格分镜图");
+        return;
+      }
+
+      const selected = selectedPanelIndexes();
+      if (!selected.length) {
+        showToast("请至少勾选一个分镜");
+        return;
+      }
+
+      const firstIndex = parsePositiveInteger(startIndex.value, 1);
+      const sheet = parsePositiveInteger(sheetIndex.value, 1);
+      const entries = [];
+      let outputDirectoryHandle = null;
+      let usingDirectory = false;
+
+      try {
+        if ("showDirectoryPicker" in window) {
+          const parentDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
+          outputDirectoryHandle = await parentDirectory.getDirectoryHandle(`${sourceStem()}_shots`, { create: true });
+          usingDirectory = true;
+        }
+
+        for (let offset = 0; offset < selected.length; offset += 1) {
+          const panelIndex = selected[offset];
+          const shotIndex = firstIndex + offset;
+          const result = await cutPanelToBlob(panelIndex);
+          const filename = buildFrameBasename(panelIndex, shotIndex);
+          const output = usingDirectory ? `${sourceStem()}_shots/${filename}` : buildFrameFilename(panelIndex, shotIndex);
+
+          if (usingDirectory) {
+            await writeBlobToDirectory(outputDirectoryHandle, filename, result.blob);
+          } else {
+            downloadBlob(result.blob, output);
+          }
+
+          entries.push({
+            shotIndex,
+            sheetIndex: sheet,
+            panelIndex,
+            row: result.crop.row,
+            column: result.crop.col,
+            output,
+            cropBox: [result.crop.x, result.crop.y, result.crop.x + result.crop.width, result.crop.y + result.crop.height],
+            size: result.size
+          });
+        }
+
+        const manifest = buildCutManifest(entries);
+        const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+        if (usingDirectory) {
+          await writeBlobToDirectory(outputDirectoryHandle, "manifest.json", manifestBlob);
+        } else {
+          downloadBlob(manifestBlob, `${sourceStem()}_shots/manifest.json`);
+        }
+        showToast(`已切割 ${entries.length} 张分镜`);
+      } catch (error) {
+        console.error(error);
+        if (error && error.name === "AbortError") {
+          showToast("已取消切割");
+          return;
+        }
+        showToast("切割失败，请改用本地上传图片");
+      }
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 1400);
+    }
+
+    async function copyText(text, message) {
+      await navigator.clipboard.writeText(text);
+      showToast(message);
+    }
+
+    function openPromptModal(index) {
+      state.active = index;
+      state.editing = index;
+      modalTitle.textContent = `编辑第 ${index} 格 Prompt`;
+      modalInstruction.value = state.instructions[index - 1];
+      promptModal.classList.add("open");
+      window.setTimeout(() => modalInstruction.focus(), 0);
+      render();
+    }
+
+    function closePromptModal() {
+      promptModal.classList.remove("open");
+      state.editing = null;
+    }
+
+    function renderGrid() {
+      grid.innerHTML = "";
+      for (let index = 1; index <= 9; index += 1) {
+        const instruction = state.instructions[index - 1].trim();
+        const cell = document.createElement("div");
+        cell.className = `cell${state.active === index ? " active" : ""}${state.included[index - 1] ? "" : " out"}${instruction ? " has-edit" : ""}`;
+        cell.tabIndex = 0;
+        cell.setAttribute("role", "button");
+        cell.setAttribute("aria-label", `第 ${index} 格`);
+        cell.addEventListener("click", () => {
+          state.active = index;
+          render();
+        });
+        cell.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            state.active = index;
+            render();
+          }
+        });
+
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = index;
+
+        const editIcon = document.createElement("button");
+        editIcon.type = "button";
+        editIcon.className = "edit-icon";
+        editIcon.title = `编辑第 ${index} 格 Prompt`;
+        editIcon.setAttribute("aria-label", `编辑第 ${index} 格 Prompt`);
+        editIcon.textContent = "✎";
+        editIcon.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openPromptModal(index);
+        });
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = state.included[index - 1];
+        checkbox.title = "纳入最终分镜";
+        checkbox.addEventListener("click", (event) => event.stopPropagation());
+        checkbox.addEventListener("change", () => {
+          state.included[index - 1] = checkbox.checked;
+          render();
+        });
+
+        cell.append(badge, editIcon, checkbox);
+
+        if (instruction) {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "prompt-chip";
+          chip.title = "点击二次修改 prompt";
+          chip.textContent = instruction;
+          chip.addEventListener("click", (event) => {
+            event.stopPropagation();
+            openPromptModal(index);
+          });
+          cell.append(chip);
+        }
+
+        grid.append(cell);
+      }
+    }
+
+    function render() {
+      renderGrid();
+      panelTitle.textContent = "多分镜编辑";
+      includedCount.textContent = state.included.filter(Boolean).length;
+      editCount.textContent = editedPanelIndexes().length;
+      combinedPrompt.value = buildCombinedPrompt();
+      const chosen = state.included.map((ok, i) => ok ? i + 1 : null).filter(Boolean);
+      const editing = editedPanelIndexes();
+      includedList.textContent = `当前纳入：${chosen.length ? chosen.join("、") : "无"}。待修改：${editing.length ? editing.join("、") : "无"}。切图顺序按 1-9 从左到右、从上到下，文件名连续递增。`;
+    }
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      state.imageName = file.name;
+      state.imageSrc = URL.createObjectURL(file);
+      boardImg.src = state.imageSrc;
+      emptyState.style.display = "none";
+    });
+
+    urlInput.addEventListener("change", () => {
+      const value = urlInput.value.trim();
+      if (!value) return;
+      state.imageName = value.split("/").pop() || "storyboard-image";
+      state.imageSrc = value.startsWith("/") ? `file://${value}` : value;
+      boardImg.crossOrigin = "anonymous";
+      boardImg.src = state.imageSrc;
+      emptyState.style.display = "none";
+    });
+
+    document.getElementById("selectAll").addEventListener("click", () => {
+      state.included = state.included.map(() => true);
+      render();
+    });
+
+    document.getElementById("selectNone").addEventListener("click", () => {
+      state.included = state.included.map(() => false);
+      render();
+    });
+
+    document.getElementById("copyPrompt").addEventListener("click", () => {
+      copyText(combinedPrompt.value, "已复制完整 Prompt");
+    });
+
+    document.getElementById("splitImages").addEventListener("click", splitStoryboardImages);
+    document.getElementById("splitImagesSide").addEventListener("click", splitStoryboardImages);
+
+    document.getElementById("editImage").addEventListener("click", async () => {
+      const payload = buildPayload();
+      if (!payload.editedPanels.length) {
+        showToast("请先填写至少一个分镜 Prompt");
+        return;
+      }
+
+      if (window.storyboardGridManager && typeof window.storyboardGridManager.editImage === "function") {
+        await window.storyboardGridManager.editImage(payload);
+        showToast("已发送图片修改请求");
+        return;
+      }
+
+      if (window.electronAPI && typeof window.electronAPI.editStoryboardImage === "function") {
+        await window.electronAPI.editStoryboardImage(payload);
+        showToast("已发送图片修改请求");
+        return;
+      }
+
+      await copyText(payload.combinedPrompt, "已复制 Prompt，请连同原图交给图片编辑模型");
+    });
+
+    document.getElementById("cancelPrompt").addEventListener("click", closePromptModal);
+
+    document.getElementById("savePrompt").addEventListener("click", () => {
+      const target = state.editing || state.active;
+      state.instructions[target - 1] = modalInstruction.value.trim();
+      state.active = target;
+      closePromptModal();
+      render();
+    });
+
+    promptModal.addEventListener("click", (event) => {
+      if (event.target === promptModal) closePromptModal();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closePromptModal();
+    });
+
+    document.getElementById("exportJson").addEventListener("click", () => {
+      const payload = buildPayload();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "storyboard-grid-selection.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    render();
+  </script>
+</body>
+</html>
