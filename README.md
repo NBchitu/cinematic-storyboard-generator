@@ -14,33 +14,56 @@
 6. 为每个分镜头生成视频提示词，可用于 VEO 3、Seedance、Luma、可灵等视频模型。
 7. 支持把九宫格分镜大图切成 9 张独立分镜图片，并生成 `manifest.json` 记录切图信息。
 
-## 效果图放哪里
-
-README 已经预留了效果图位置。请把截图或生成结果放到这个文件夹：
-
-```text
-assets/readme-images/
-```
-
-建议文件名如下：
-
-```text
-assets/readme-images/storyboard-sheet-01.png
-assets/readme-images/storyboard-sheet-02.png
-assets/readme-images/storyboard-sheet-03.png
-assets/readme-images/04-split-frames.png
-assets/readme-images/05-video-prompts.png
-```
-
-放入图片后，下面的占位图会自动显示。
-
 ## 效果预览
 
 ### 1. Codex 推荐导演风格、画面风格和比例
 
-这里可以放一张 Codex 对剧本做风格推荐或创作方向规划的截图，例如 `assets/readme-images/01-style-options.png`。
+Codex 会先分析剧本，再推荐导演风格、视觉风格、视频比例和视频性质，让用户在生成分镜前确认整体创作方向。
+
+![Codex 推荐导演风格、画面风格和比例示例 02](assets/readme-images/04-split-frames-02.png)
+
+![Codex 推荐导演风格、画面风格和比例示例 01](assets/readme-images/04-split-frames-01.png)
 
 ### 2. 生成的 3x3 九宫格电影分镜大图
+
+下面三张分镜大图使用的参考剧本如下：
+
+```text
+once upon a time, in a small coastal village, there lived a boy named Leo.
+Every morning, he would set out in his little wooden boat to fish,
+the sun glinting on the waves like scattered gold.
+One quiet morning, as he hauled in his fishing net, he felt it tug sharply
+he had caught something far heavier than any fish.
+With a mixture of curiosity and unease, he pulled the net closer
+and to his astonishment, a mermaid was trapped inside.
+Her silver-blue tail shimmered faintly beneath the tangled net, and her wide,
+frightened eyes met his, filled with panic and confusion.
+Leo's heart leapt. He had never imagined he would encounter such a magical creature
+and worse, it was his net that had ensnared her.
+Without hesitation, he set aside the fish and carefully cut the ropes of the net, freeing her tail.
+The mermaid floated for a moment, watching him cautiously, her eyes curious but wary.
+She twirled slowly in the water, sending tiny droplets sparkling into the sunlight.
+Then, as if deciding he meant no harm, she swam closer.
+Gently, she pressed her lips to his cheek in a soft, cool kiss,
+carrying the scent of the sea and a faint shimmer of magic.
+Leo felt warmth spread through him, and a sense of wonder filled his chest.
+He realized this was no ordinary encounter--this was a gift of trust and gratitude.
+From the water, the mermaid produced a pearl as round and luminous as the moon, placing it carefully into his hand.
+It glowed softly, holding the quiet light of the ocean itself.
+Leo held it with awe, sensing that it was more than a gift--it was a token of friendship and thanks.
+Before leaving, she leapt gracefully through the waves
+creating arcs of water that sparkled like liquid diamonds.
+She paused for a moment, gazing at him, as if to say, "Remember me, and remember this day."
+Then she vanished beneath the sea, leaving only a ripple and a faint shimmer in the morning sun.
+Leo rowed back to the shore, clutching the pearl, his mind alight with wonder.
+He thought of the mermaid, her gentle eyes, the kiss, and the glowing pearl,
+and he realized something extraordinary: sometimes,
+the smallest acts of kindness--like freeing a trapped creature--can lead to the most magical rewards.
+From that day on, whenever he gazed out at the sea
+Leo imagined the mermaid swimming beneath the waves, watching over him, and he smiled,
+knowing their paths had crossed in a moment of trust, courage
+and gratitude--a memory that would remain a fairy tale in his heart forever.
+```
 
 下面三张图是同一个剧本连续生成的三张 3x3 九宫格电影分镜大图，共包含 `3 x 9 = 27` 个分镜镜头。
 
@@ -52,19 +75,31 @@ assets/readme-images/05-video-prompts.png
 
 ### 3. 网页工具选择和编辑某个镜头
 
-这里可以放 `tools/storyboard-grid-manager.html` 打开后的界面截图，例如 `assets/readme-images/03-grid-manager.png`。
+网页工具可以载入已经生成的 3x3 九宫格分镜大图，选择指定镜头，填写局部修改要求，并生成可用于图片编辑模型的合并 Prompt。
+
+![Storyboard Grid Manager 网页工具](assets/readme-images/01-style-options.png)
+
+![网页工具局部编辑前后对比](assets/readme-images/03-grid-manager-edit-result.png)
+
+如果某个镜头需要局部修改，建议先在完整九宫格阶段处理，不要先切割。操作方式如下：
+
+1. 在网页工具里打开完整的 3x3 九宫格分镜大图。
+2. 点击需要修改的分镜格，填写该镜头的局部修改要求。
+3. 点击 `复制完整Prompt` 按钮，获取图片编辑提示词。
+4. 将“待编辑的完整九宫格图片”加上这段 Prompt 一起发送给图片编辑模型。
+5. 等九宫格编辑满意后，再用网页工具或脚本切割成独立分镜头图片。
+
+注意：Image 2 模型对传图和人物相关编辑限制较多，不建议作为九宫格二次编辑的首选。这里更建议使用 Nano Banana Pro 来编辑完整九宫格分镜图；Nano Banana 一代模型能力不够，复杂分镜、人物一致性和局部精修效果通常不稳定。
 
 ### 4. 自动切割后的独立分镜图片
 
-![切割后的独立分镜](assets/readme-images/04-split-frames.png)
+![自动切割后的独立分镜示例](assets/readme-images/03-grid-manager.png)
 
-这里建议放 9 张分镜图片所在文件夹，或把 9 张图片拼成一张预览图。
+网页工具或切图脚本可以把一张 3x3 九宫格分镜大图自动切割成 9 张独立镜头图片，方便后续逐张进行图生视频。
 
 ### 5. 每个镜头对应的视频生成提示词
 
-![视频提示词示例](assets/readme-images/05-video-prompts.png)
-
-这里建议放 Codex 输出的 `Video Prompt Style Bible` 和单镜头视频提示词截图。
+视频生成提示词展示还在开发中。后续会在这里补充 Codex 输出的 `Video Prompt Style Bible` 和单镜头视频提示词效果图。
 
 ## 安装方法
 
